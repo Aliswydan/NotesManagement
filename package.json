@@ -1,0 +1,14 @@
+{
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  },
+  "scripts": {
+    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "client": "cd client && npm start",
+    "server": "cd server && nodemon index.js"
+  },
+  "dependencies": {
+    "google-auth-library": "^9.14.1",
+    "react-router-dom": "^6.26.2"
+  }
+}
