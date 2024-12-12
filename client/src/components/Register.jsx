@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Register.css'; // Import custom CSS
 
-const Register = () => {
+export default function Register() {
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -78,6 +79,4 @@ const Register = () => {
       </div>
     </div>
   );
-};
-
-export default Register;
+}
