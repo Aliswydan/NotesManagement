@@ -2,44 +2,51 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Login.css';
+import useInput from '../hook/useInput';
 
-const Login = () => {
-  const [enteredValues, setEnteredValues] = useState({
-    username: '',
-    password: ''
-  });
-  const [didEdit, setDidEdit] = useState({
-    username: false,
-    password: false
-  });
-  const [errorMessage, setErrorMessage] = useState('');
+export default function Login() {
   const navigate = useNavigate();
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const validateInput = (type, value) => {
-    if (type === 'username') {
-      if (!value.includes('@')) return 'Please enter a valid email address.';
-    } else if (type === 'password') {
-      if (value.trim().length < 6) return 'Password must be at least 6 characters long.';
-    }
-    return ''; // No error
-  };
+  // Validation functions return error messages if invalid
+  function validateEmail(value) {
+    return value.includes('@') ? '' : 'Please enter a valid email address.';
+  }
 
-  const handleLogin = async (e) => {
+  function validatePass(value) {
+    return value.trim().length >= 6 ? '' : 'Password must be at least 6 characters long.';
+  }
+
+  const {
+    value: emailValue,
+    handleInputChange: handleEmailChange,
+    handleInputBlur: handleEmailBlur,
+    hasError: emailError,
+  } = useInput('', validateEmail, setErrorMessage);
+
+  const {
+    value: passValue,
+    handleInputChange: handlePassChange,
+    handleInputBlur: handlePassBlur,
+    hasError: passError,
+  } = useInput('', validatePass, setErrorMessage);
+
+  async function handleLogin(e) {
     e.preventDefault();
 
-    // Final validation before submission
-    const usernameError = validateInput('username', enteredValues.username);
-    const passwordError = validateInput('password', enteredValues.password);
-
-    if (usernameError || passwordError) {
-      setErrorMessage(usernameError || passwordError);
+    // Validate inputs before making API call
+    if (emailError || passError) {
+      setErrorMessage(validateEmail(emailValue) || validatePass(passValue));
       return;
     }
 
     try {
-      const response = await axios.post('/login', { ...enteredValues }, { withCredentials: true });
+      const response = await axios.post(
+        '/login',
+        { username: emailValue, password: passValue },
+        { withCredentials: true }
+      );
       if (response.data.message === 'Login successful') {
-        setEnteredValues({ username: '', password: '' });
         localStorage.setItem('isAuthenticated', true); // Store authentication state
         navigate('/NotePage'); // Redirect to NotePage after successful login
       }
@@ -50,31 +57,7 @@ const Login = () => {
         setErrorMessage('An error occurred. Please try again.');
       }
     }
-  };
-
-  const handleInputChange = (type, value) => {
-    setEnteredValues((prevValue) => ({
-      ...prevValue,
-      [type]: value
-    }));
-
-    // Update error message only if the user has already interacted with the field
-    if (didEdit[type]) {
-      const error = validateInput(type, value);
-      setErrorMessage(error);
-    }
-  };
-
-  const handleInputBlur = (type) => {
-    setDidEdit((prevEdit) => ({
-      ...prevEdit,
-      [type]: true
-    }));
-
-    // Trigger validation on blur
-    const error = validateInput(type, enteredValues[type]);
-    setErrorMessage(error);
-  };
+  }
 
   return (
     <div className="login-container">
@@ -87,9 +70,9 @@ const Login = () => {
               type="text"
               id="email"
               className="form-control"
-              value={enteredValues.username}
-              onBlur={() => handleInputBlur('username')}
-              onChange={(event) => handleInputChange('username', event.target.value)}
+              value={emailValue}
+              onBlur={handleEmailBlur}
+              onChange={handleEmailChange}
               required
             />
           </div>
@@ -100,9 +83,9 @@ const Login = () => {
               type="password"
               id="password"
               className="form-control"
-              value={enteredValues.password}
-              onBlur={() => handleInputBlur('password')}
-              onChange={(event) => handleInputChange('password', event.target.value)}
+              value={passValue}
+              onBlur={handlePassBlur}
+              onChange={handlePassChange}
               required
             />
           </div>
@@ -130,6 +113,4 @@ const Login = () => {
       </div>
     </div>
   );
-};
-
-export default Login;
+}
