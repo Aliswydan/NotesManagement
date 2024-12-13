@@ -1,25 +1,47 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import './Login.css'; // Import custom CSS
-
+import './Login.css';
 
 const Login = () => {
-  
-  const [enteredValues, SetEnteredValues] = useState({
-    username: '' , 
+  const [enteredValues, setEnteredValues] = useState({
+    username: '',
     password: ''
+  });
+  const [didEdit, setDidEdit] = useState({
+    username: false,
+    password: false
   });
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
+  const validateInput = (type, value) => {
+    if (type === 'username') {
+      if (!value.includes('@')) return 'Please enter a valid email address.';
+    } else if (type === 'password') {
+      if (value.trim().length < 6) return 'Password must be at least 6 characters long.';
+    }
+    return ''; // No error
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    // Final validation before submission
+    const usernameError = validateInput('username', enteredValues.username);
+    const passwordError = validateInput('password', enteredValues.password);
+
+    if (usernameError || passwordError) {
+      setErrorMessage(usernameError || passwordError);
+      return;
+    }
+
     try {
       const response = await axios.post('/login', { ...enteredValues }, { withCredentials: true });
       if (response.data.message === 'Login successful') {
-        localStorage.setItem('isAuthenticated', true);  // Store authentication state
-        navigate('/NotePage');  // Redirect to NotePage after successful login
+        setEnteredValues({ username: '', password: '' });
+        localStorage.setItem('isAuthenticated', true); // Store authentication state
+        navigate('/NotePage'); // Redirect to NotePage after successful login
       }
     } catch (error) {
       if (error.response) {
@@ -29,13 +51,30 @@ const Login = () => {
       }
     }
   };
-  
-  function handleInputChange(type , value){
-    SetEnteredValues(prevValue => ({
-      ...prevValue , 
-      [type] : value
-    }))
-  }
+
+  const handleInputChange = (type, value) => {
+    setEnteredValues((prevValue) => ({
+      ...prevValue,
+      [type]: value
+    }));
+
+    // Update error message only if the user has already interacted with the field
+    if (didEdit[type]) {
+      const error = validateInput(type, value);
+      setErrorMessage(error);
+    }
+  };
+
+  const handleInputBlur = (type) => {
+    setDidEdit((prevEdit) => ({
+      ...prevEdit,
+      [type]: true
+    }));
+
+    // Trigger validation on blur
+    const error = validateInput(type, enteredValues[type]);
+    setErrorMessage(error);
+  };
 
   return (
     <div className="login-container">
@@ -49,7 +88,8 @@ const Login = () => {
               id="email"
               className="form-control"
               value={enteredValues.username}
-              onChange={(event)=> handleInputChange('username' , event.target.value )}
+              onBlur={() => handleInputBlur('username')}
+              onChange={(event) => handleInputChange('username', event.target.value)}
               required
             />
           </div>
@@ -61,8 +101,8 @@ const Login = () => {
               id="password"
               className="form-control"
               value={enteredValues.password}
-              onChange={(event)=> handleInputChange('password' , event.target.value )}
-             
+              onBlur={() => handleInputBlur('password')}
+              onChange={(event) => handleInputChange('password', event.target.value)}
               required
             />
           </div>

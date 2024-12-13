@@ -36,7 +36,7 @@ export default function Register() {
           <div className="form-group mb-4">
             <label htmlFor="username" className="form-label">Username</label>
             <input
-              type="text"
+              type="email"
               id="username"
               className="form-control"
               value={username}
@@ -54,8 +54,10 @@ export default function Register() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={6}
             />
           </div>
+          
 
           {errorMessage && (
             <div className="alert alert-danger" role="alert">
